@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <Author>Ryan Martin</Author>
+    <Company>Universe</Company>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

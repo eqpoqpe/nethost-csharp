@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/NetHost/">
+    <Project Path="src/NetHost/Universe.NetHost.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NetHostTests/NetHostTests.csproj" />
+  </Folder>
+</Solution>

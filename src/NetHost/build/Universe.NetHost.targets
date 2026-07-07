@@ -1,0 +1,87 @@
+<Project>
+  <PropertyGroup>
+    <NativeBinDir>$(TargetDir)</NativeBinDir>
+
+    <NativePlatform>$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)</NativePlatform>
+    <NativeObjDir>$(MSBuildThisFileDirectory)obj/$(Configuration)/$(NativePlatform)/</NativeObjDir>
+  </PropertyGroup>
+
+  <Target Name="PrepareLibContains">
+    <PropertyGroup>
+      <NetHostDir>$(NetCoreTargetingPackRoot)/Microsoft.NETCore.App.Host.$(NETCoreSdkRuntimeIdentifier)/$(BundledNETCoreAppPackageVersion)/runtimes/$(NETCoreSdkRuntimeIdentifier)/native</NetHostDir>
+
+      <NetHostName Condition="$([MSBuild]::IsOsPlatform('Windows'))">nethost.dll</NetHostName>
+      <NetHostName Condition="$([MSBuild]::IsOsPlatform('Linux'))">libnethost.so</NetHostName>
+      <NetHostName Condition="$([MSBuild]::IsOsPlatform('OSX'))">libnethost.dylib</NetHostName>
+
+      <Message Importance="High" Text="NetHostDir $(NetHostDir)" />
+    </PropertyGroup>
+  </Target>
+
+  <!-- Targets to build the native project. The output goes directly to the bin directory -->
+  <Target Name="PrepareForNativeBuild" DependsOnTargets="PrepareLibContains">
+
+    <MakeDir Directories="$(NativeBinDir)" />
+    <MakeDir Directories="$(NativeObjDir)" />
+  </Target>
+
+  <Target Name="PrepareForNativePublish" DependsOnTargets="PrepareLibContains">
+
+    <MakeDir Directories="$(NativeBinDir)/publish" />
+    <MakeDir Directories="$(NativeObjDir)" />
+  </Target>
+
+  <Target
+    Name="PublishNativeProjectUnix"
+    AfterTargets="Publish"
+    DependsOnTargets="PrepareForNativePublish"
+    Condition="$([MSBuild]::IsOsPlatform('Linux')) OR $([MSBuild]::IsOsPlatform('OSX'))"
+  >
+    <Copy
+      SourceFiles="$(NetHostDir)/$(NetHostName)"
+      DestinationFolder="$(NativeBinDir)/publish"
+      SkipUnchangedFiles="True"
+    />
+  </Target>
+
+  <Target
+    Name="PublishNativeProjectWindows"
+    AfterTargets="Publish"
+    DependsOnTargets="PrepareForNativePublish"
+    Condition="$([MSBuild]::IsOsPlatform('Windows'))"
+  >
+
+    <Copy
+      SourceFiles="$(NetHostDir)/$(NetHostName)"
+      DestinationFolder="$(NativeBinDir)/publish"
+      SkipUnchangedFiles="True"
+    />
+  </Target>
+
+  <Target
+    Name="BuildNativeProjectUnix"
+    AfterTargets="Build"
+    DependsOnTargets="PrepareForNativeBuild"
+    Condition="$([MSBuild]::IsOsPlatform('Linux')) OR $([MSBuild]::IsOsPlatform('OSX'))"
+  >
+    <Copy
+      SourceFiles="$(NetHostDir)/$(NetHostName)"
+      DestinationFolder="$(NativeBinDir)"
+      SkipUnchangedFiles="True"
+    />
+  </Target>
+
+  <Target
+    Name="BuildNativeProjectWindows"
+    AfterTargets="Build"
+    DependsOnTargets="PrepareForNativeBuild"
+    Condition="$([MSBuild]::IsOsPlatform('Windows'))"
+  >
+
+    <Copy
+      SourceFiles="$(NetHostDir)/$(NetHostName)"
+      DestinationFolder="$(NativeBinDir)"
+      SkipUnchangedFiles="True"
+    />
+  </Target>
+</Project>
