@@ -1,7 +1,9 @@
 ﻿using System.Runtime.InteropServices;
 using Universe.NetHost;
 
-if (NetHost.GetHostFxrPath() is string path)
+var result = NetHost.GetHostFxrPath();
+
+if (result is { IsSuccessful: true, Value: string path })
 {
     Console.WriteLine(path);
 
@@ -10,5 +12,5 @@ if (NetHost.GetHostFxrPath() is string path)
 }
 else
 {
-    Console.WriteLine("Failed");
+    Console.WriteLine($"Failed with code: {result.Error}");
 }

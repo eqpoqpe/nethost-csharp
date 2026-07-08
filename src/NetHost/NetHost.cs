@@ -1,28 +1,42 @@
 ﻿using System.Runtime.InteropServices;
+using DotNext;
+using Universe.NetHost.Errors;
 
 namespace Universe.NetHost;
 
-public readonly struct GetHostfxrParameters
+public readonly struct GetHostFxrParameters
 {
     public string? AssemblyPath { get; init; }
     public string? DotNetRoot { get; init; }
 
-    public GetHostfxrParameters() { }
+    public GetHostFxrParameters() { }
 }
 
 public static partial class NetHost
 {
-    private const string LibraryName = "nethost";
-
-    public static string? GetHostFxrPath()
+    public static Result<string, NetHostError> GetHostFxrPath()
     {
         unsafe
         {
-            return Unsafe_GetHostFxrPath(null);
+            var path = GetHostFxrPath(null, out int resultCode);
+
+            if (path is not null)
+                return new(path);
+
+            return resultCode switch
+            {
+                -2147450728 => new(NetHostError.HostApiBufferTooSmall),
+                -2147450734 => new(NetHostError.LibHostInvalidArgs),
+                -2147450748 => new(NetHostError.CoreHostLibMissingFailure),
+                -2147450749 => new(NetHostError.CoreHostLibLoadFailure),
+                -2147450751 => new(NetHostError.CoreHostResolveFailure),
+                -2147450718 => new(NetHostError.HostApiUnsupportedVersion),
+                _ => new(NetHostError.Unrecoverable),
+            };
         }
     }
 
-    public static string? GetHostFxrPath(in GetHostfxrParameters parameters)
+    public static Result<string, NetHostError> GetHostFxrPath(in GetHostFxrParameters parameters)
     {
         unsafe
         {
@@ -39,37 +53,60 @@ public static partial class NetHost
                     )
             )
             {
-                get_hostfxr_parameters hostfxrParameters = new()
+                NetHostNative.get_hostfxr_parameters hostfxrParameters = new()
                 {
-                    size = (nuint)sizeof(get_hostfxr_parameters),
+                    size = (nuint)sizeof(NetHostNative.get_hostfxr_parameters),
                     assembly_path = (ushort*)assemblyPathPtr,
                     dotnet_root = (ushort*)dotnetRoot,
                 };
 
-                return Unsafe_GetHostFxrPath(&hostfxrParameters);
+                var path = GetHostFxrPath(null, out int resultCode);
+
+                return path is not null
+                    ? new(path)
+                    : resultCode switch
+                    {
+                        -2147450728 => new(NetHostError.HostApiBufferTooSmall),
+                        -2147450734 => new(NetHostError.LibHostInvalidArgs),
+                        -2147450748 => new(NetHostError.CoreHostLibMissingFailure),
+                        -2147450749 => new(NetHostError.CoreHostLibLoadFailure),
+                        -2147450751 => new(NetHostError.CoreHostResolveFailure),
+                        -2147450718 => new(NetHostError.HostApiUnsupportedVersion),
+                        _ => new(NetHostError.Unrecoverable),
+                    };
             }
         }
     }
 
-    private static unsafe string? Unsafe_GetHostFxrPath(get_hostfxr_parameters* parameters)
+    private static unsafe string? GetHostFxrPath(
+        NetHostNative.get_hostfxr_parameters* parameters,
+        out int resultCode
+    )
     {
-        const int maxPath = 260;
-        char* buffer = stackalloc char[maxPath];
-        nuint bufferSize = maxPath;
-        var rc = Native_GetHostFxrPath(buffer, &bufferSize, parameters);
+        const int initialSize = 512;
 
-        return rc != 0 ? null : new(buffer, 0, (int)(bufferSize - 1));
+        char* buffer = stackalloc char[initialSize];
+        nuint bufferSize = initialSize;
+
+        resultCode = NetHostNative.GetHostFxrPath(buffer, &bufferSize, parameters);
+
+        return resultCode != 0 ? null : new string(buffer, 0, (int)bufferSize - 1);
     }
+}
+
+static partial class NetHostNative
+{
+    private const string LibraryName = "nethost";
 
     [LibraryImport(LibraryName, EntryPoint = "get_hostfxr_path")]
-    private static unsafe partial int Native_GetHostFxrPath(
+    public static unsafe partial int GetHostFxrPath(
         char* buffer,
         nuint* bufferSize,
         get_hostfxr_parameters* parameters
     );
 
 #pragma warning disable IDE1006 // Naming Styles
-    private unsafe partial struct get_hostfxr_parameters
+    public unsafe partial struct get_hostfxr_parameters
 #pragma warning restore IDE1006 // Naming Styles
     {
 #pragma warning disable IDE1006 // Naming Styles

@@ -7,6 +7,6 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Universe.NetHost" Version="0.1.0" />
+    <PackageReference Include="Universe.NetHost" Version="0.2.0" />
   </ItemGroup>
 </Project>
