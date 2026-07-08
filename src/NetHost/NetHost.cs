@@ -20,19 +20,7 @@ public static partial class NetHost
         {
             var path = GetHostFxrPath(null, out int resultCode);
 
-            if (path is not null)
-                return new(path);
-
-            return resultCode switch
-            {
-                -2147450728 => new(NetHostError.HostApiBufferTooSmall),
-                -2147450734 => new(NetHostError.LibHostInvalidArgs),
-                -2147450748 => new(NetHostError.CoreHostLibMissingFailure),
-                -2147450749 => new(NetHostError.CoreHostLibLoadFailure),
-                -2147450751 => new(NetHostError.CoreHostResolveFailure),
-                -2147450718 => new(NetHostError.HostApiUnsupportedVersion),
-                _ => new(NetHostError.Unrecoverable),
-            };
+            return path is not null ? new(path) : new(MapErrorCode(resultCode));
         }
     }
 
@@ -62,20 +50,23 @@ public static partial class NetHost
 
                 var path = GetHostFxrPath(null, out int resultCode);
 
-                return path is not null
-                    ? new(path)
-                    : resultCode switch
-                    {
-                        -2147450728 => new(NetHostError.HostApiBufferTooSmall),
-                        -2147450734 => new(NetHostError.LibHostInvalidArgs),
-                        -2147450748 => new(NetHostError.CoreHostLibMissingFailure),
-                        -2147450749 => new(NetHostError.CoreHostLibLoadFailure),
-                        -2147450751 => new(NetHostError.CoreHostResolveFailure),
-                        -2147450718 => new(NetHostError.HostApiUnsupportedVersion),
-                        _ => new(NetHostError.Unrecoverable),
-                    };
+                return path is not null ? new(path) : new(MapErrorCode(resultCode));
             }
         }
+    }
+
+    private static NetHostError MapErrorCode(int code)
+    {
+        return code switch
+        {
+            -2147450728 => NetHostError.HostApiBufferTooSmall,
+            -2147450734 => NetHostError.LibHostInvalidArgs,
+            -2147450748 => NetHostError.CoreHostLibMissingFailure,
+            -2147450749 => NetHostError.CoreHostLibLoadFailure,
+            -2147450751 => NetHostError.CoreHostResolveFailure,
+            -2147450718 => NetHostError.HostApiUnsupportedVersion,
+            _ => NetHostError.Unrecoverable,
+        };
     }
 
     private static unsafe string? GetHostFxrPath(
