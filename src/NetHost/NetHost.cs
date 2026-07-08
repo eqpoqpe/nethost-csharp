@@ -4,14 +4,6 @@ using Universe.NetHost.Errors;
 
 namespace Universe.NetHost;
 
-public readonly struct GetHostFxrParameters
-{
-    public string? AssemblyPath { get; init; }
-    public string? DotNetRoot { get; init; }
-
-    public GetHostFxrParameters() { }
-}
-
 public static partial class NetHost
 {
     public static Result<string, NetHostError> GetHostFxrPath()
@@ -83,6 +75,14 @@ public static partial class NetHost
 
         return resultCode != 0 ? null : new string(buffer, 0, (int)bufferSize - 1);
     }
+}
+
+public readonly struct GetHostFxrParameters
+{
+    public string? AssemblyPath { get; init; }
+    public string? DotNetRoot { get; init; }
+
+    public GetHostFxrParameters() { }
 }
 
 static partial class NetHostNative
